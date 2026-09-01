@@ -1,0 +1,47 @@
+version: '3.9'
+
+services:
+  payload:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: baobab-cms
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      PAYLOAD_SECRET: ${PAYLOAD_SECRET:-super-secret-change-me}
+      PAYLOAD_JWT_SECRET: ${PAYLOAD_JWT_SECRET:-jwt-secret-change-me}
+      DATABASE_URL: postgresql://payload:payload@postgres:5432/payload
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+      CORS_ORIGIN: http://localhost:3000
+      CSRF_ORIGIN: http://localhost:3000
+    depends_on:
+      - postgres
+      - rabbitmq
+    ports:
+      - '3000:3000'
+    volumes:
+      - .:/app
+      - /app/node_modules
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: baobab-postgres
+    environment:
+      POSTGRES_DB: payload
+      POSTGRES_USER: payload
+      POSTGRES_PASSWORD: payload
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: baobab-rabbitmq
+    ports:
+      - '5672:5672'
+      - '15672:15672'
+
+volumes:
+  postgres_data:

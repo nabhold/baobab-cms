@@ -1,0 +1,28 @@
+{
+  "name": "baobab-cms",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "payload dev",
+    "build": "payload build",
+    "start": "payload start",
+    "db:migrate": "payload migrate",
+    "db:generate": "payload migrate:create",
+    "lint": "eslint . --ext .ts,.tsx"
+  },
+  "dependencies": {
+    "@payloadcms/db-postgres": "^3.0.0",
+    "amqplib": "^0.10.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "payload": "^3.0.0"
+  },
+  "devDependencies": {
+    "@types/amqplib": "^0.10.0",
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.10.2",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.2"
+  }
+}
