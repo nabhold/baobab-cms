@@ -1,0 +1,15 @@
+services:
+  workspace:
+    image: ghcr.io/nabhold/baobab-dev:1.2.6
+    command: sleep infinity
+    volumes:
+      - ..:/workspaces/baobab-cms:cached
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://payload:payload@postgres:5432/payload
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy

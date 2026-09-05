@@ -1,8 +1,9 @@
 {
   "name": "Nabhold baobab-cms",
-  "dockerComposeFile": "../docker-compose.yml",
-  "service": "payload",
-  "workspaceFolder": "/app",
+  "dockerComposeFile": ["../docker-compose.yml", "docker-compose.yml"],
+  "service": "workspace",
+  "runServices": ["postgres", "rabbitmq"],
+  "workspaceFolder": "/workspaces/baobab-cms",
   "shutdownAction": "stopCompose",
   "remoteUser": "vscode",
   "updateRemoteUserUID": true,
