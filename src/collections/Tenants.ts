@@ -1,14 +1,45 @@
 import type { CollectionConfig } from 'payload';
-import { publishEntityEvent } from '../hooks/publishEventHandler.js';
+import { canonicalAfterChangeHook, canonicalAfterDeleteHook } from '../baobab/events/hook.js';
+import { CanonicalEventType } from '../baobab/events/types.js';
+import { platformAdminOnlyAccess } from '../baobab/tenancy/access.js';
+import { tryResolveContext } from '../baobab/context/resolve.js';
 
+/**
+ * Local, non-authoritative projection of the canonical Baobab tenant
+ * (ADR-0012 §5-6). In a full deployment the Baobab Control Plane is
+ * authoritative and this collection would be kept fresh by consuming
+ * `tenant.updated` Control Plane events; no Control Plane exists in this
+ * environment yet, so this collection is also the practical source of
+ * truth for local development and tests — `lastSyncedAt` and
+ * `isProjection` make that distinction explicit and auditable rather than
+ * silently pretending Payload owns tenancy.
+ */
 const Tenants: CollectionConfig = {
   slug: 'tenants',
   admin: {
     useAsTitle: 'name',
+    description: 'Local projection of the canonical tenant. The Control Plane remains authoritative once integrated.',
+  },
+  access: {
+    read: ({ req }) => tryResolveContext(req) !== null,
+    create: platformAdminOnlyAccess().create,
+    update: platformAdminOnlyAccess().update,
+    delete: platformAdminOnlyAccess().delete,
   },
   hooks: {
-    afterChange: [publishEntityEvent],
-    afterDelete: [publishEntityEvent],
+    afterChange: [
+      canonicalAfterChangeHook({
+        canonicalEntityType: 'TENANT',
+        eventTypeFor: (operation) =>
+          operation === 'create' ? CanonicalEventType.CONTENT_CREATED : CanonicalEventType.CONTENT_UPDATED,
+      }),
+    ],
+    afterDelete: [
+      canonicalAfterDeleteHook({
+        canonicalEntityType: 'TENANT',
+        eventTypeFor: () => CanonicalEventType.CONTENT_ARCHIVED,
+      }),
+    ],
   },
   fields: [
     {
@@ -31,6 +62,24 @@ const Tenants: CollectionConfig = {
         { label: 'Archived', value: 'archived' },
       ],
       defaultValue: 'active',
+    },
+    {
+      name: 'isolationProfile',
+      type: 'text',
+      admin: { description: 'Reference to the applicable IsolationProfile (ADR-0012 §12, §77).' },
+    },
+    { name: 'defaultLocale', type: 'text', defaultValue: 'en' },
+    { name: 'supportedLocales', type: 'text', hasMany: true },
+    {
+      name: 'isProjection',
+      type: 'checkbox',
+      defaultValue: true,
+      admin: { readOnly: true, description: 'Always true — this record is a projection, never canonical authority.' },
+    },
+    {
+      name: 'lastSyncedAt',
+      type: 'date',
+      admin: { description: 'Freshness marker for reconciliation against the Control Plane (ADR-0012 §6).' },
     },
     {
       name: 'metadata',

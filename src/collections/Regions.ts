@@ -1,15 +1,20 @@
 import type { CollectionConfig } from 'payload';
-import { publishEntityEvent } from '../hooks/publishEventHandler.js';
+import { platformGlobalReadOnlyAccess } from '../baobab/tenancy/access.js';
 
+/**
+ * Legacy coarse region/market reference list from the original
+ * installation. Preserved unmodified for backward compatibility
+ * (ADR-0019 §21-23) — new content SHOULD use the `markets` collection
+ * (ADR-0014 §10-13), which properly separates market from geography,
+ * currency, regulation, channel and brand instead of a single code.
+ */
 const Regions: CollectionConfig = {
   slug: 'regions',
   admin: {
     useAsTitle: 'code',
+    description: 'Deprecated legacy region/market code list. Use the `markets` collection for new content.',
   },
-  hooks: {
-    afterChange: [publishEntityEvent],
-    afterDelete: [publishEntityEvent],
-  },
+  access: platformGlobalReadOnlyAccess(),
   fields: [
     {
       name: 'code',
