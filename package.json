@@ -4,26 +4,45 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "payload dev",
-    "build": "payload build",
-    "start": "payload start",
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
     "db:migrate": "payload migrate",
     "db:generate": "payload migrate:create",
-    "lint": "eslint . --ext .ts,.tsx"
+    "generate:types": "payload generate:types",
+    "generate:importmap": "payload generate:importmap",
+    "outbox:dispatch": "tsx scripts/outbox/dispatch.ts",
+    "reconcile": "tsx scripts/reconciliation/run.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint ."
   },
   "dependencies": {
     "@payloadcms/db-postgres": "^3.0.0",
+    "@payloadcms/next": "^3.88.0",
     "@payloadcms/richtext-lexical": "^3.88.0",
+    "@payloadcms/storage-s3": "^3.88.0",
     "amqplib": "^0.10.5",
     "dotenv": "^16.4.5",
-    "express": "^4.19.2",
-    "payload": "^3.0.0"
+    "graphql": "^16.9.0",
+    "next": "^15.4.11",
+    "payload": "^3.0.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "sharp": "^0.35.4"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.5",
     "@types/amqplib": "^0.10.0",
-    "@types/express": "^5.0.0",
     "@types/node": "^22.10.2",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.7",
+    "@vitest/coverage-v8": "^2.1.9",
+    "eslint": "^9.39.5",
     "tsx": "^4.19.0",
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.69.0",
+    "vitest": "^2.1.9"
   }
 }

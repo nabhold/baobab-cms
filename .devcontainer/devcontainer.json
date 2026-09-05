@@ -2,17 +2,18 @@
   "name": "Nabhold baobab-cms",
   "dockerComposeFile": ["../docker-compose.yml", "docker-compose.yml"],
   "service": "workspace",
-  "runServices": ["postgres", "rabbitmq"],
+  "runServices": ["postgres", "rabbitmq", "minio", "minio-init"],
   "workspaceFolder": "/workspaces/baobab-cms",
   "shutdownAction": "stopCompose",
   "remoteUser": "vscode",
   "updateRemoteUserUID": true,
   "init": true,
-  "forwardPorts": [3000],
+  "forwardPorts": [3000, 9001],
   "portsAttributes": {
-    "3000": { "label": "Payload CMS", "onAutoForward": "openPreview" }
+    "3000": { "label": "Payload CMS", "onAutoForward": "openPreview" },
+    "9001": { "label": "MinIO Console", "onAutoForward": "silent" }
   },
-  "postCreateCommand": "baobab-verify --contract && npm ci",
+  "postCreateCommand": "baobab-verify --contract && npm ci && npm run db:migrate",
   "customizations": {
     "vscode": {
       "extensions": ["github.vscode-github-actions", "redhat.vscode-yaml", "dbaeumer.vscode-eslint"]
