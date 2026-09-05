@@ -1,4 +1,20 @@
 {
-  "image": "mcr.microsoft.com/devcontainers/universal:2",
-  "features": {}
+  "name": "Nabhold baobab-cms",
+  "dockerComposeFile": "../docker-compose.yml",
+  "service": "payload",
+  "workspaceFolder": "/app",
+  "shutdownAction": "stopCompose",
+  "remoteUser": "vscode",
+  "updateRemoteUserUID": true,
+  "init": true,
+  "forwardPorts": [3000],
+  "portsAttributes": {
+    "3000": { "label": "Payload CMS", "onAutoForward": "openPreview" }
+  },
+  "postCreateCommand": "npm ci",
+  "customizations": {
+    "vscode": {
+      "extensions": ["github.vscode-github-actions", "redhat.vscode-yaml", "dbaeumer.vscode-eslint"]
+    }
+  }
 }

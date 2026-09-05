@@ -1,0 +1,25 @@
+schema:
+  name: "nabhold-development-environment-contract"
+  version: "1.0"
+application:
+  name: "baobab-cms"
+  version: "0.1.0"
+environment:
+  provider: "baobab-dev"
+  profile: "full"
+  minimum_version: "1.2.6"
+  contract_minimum_version: "1.0"
+compatibility_policy:
+  strict_runtime_versions: false
+  allow_newer_patch_versions: true
+  allow_newer_minor_versions: false
+  allow_older_versions: false
+validation:
+  required_capabilities:
+    - "languages.node"
+    - "database.postgresql"
+    - "development.docker"
+    - "development.github_cli"
+notes:
+  - "Payload CMS is the CMS runtime; this declaration only describes compatibility with nabhold/baobab-dev."
+  - "No dedicated Node-only backend profile exists yet (the `frontend` profile is scoped to the four digital-estate repos only); `full` is the closest available profile, matching nabhold/baobab-trade's precedent."
