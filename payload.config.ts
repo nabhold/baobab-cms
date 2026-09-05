@@ -2,6 +2,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { buildConfig } from 'payload';
 import { postgresAdapter } from '@payloadcms/db-postgres';
+import { lexicalEditor } from '@payloadcms/richtext-lexical';
 
 import Users from './src/collections/Users.js';
 import Tenants from './src/collections/Tenants.js';
@@ -18,6 +19,7 @@ export default buildConfig({
   admin: {
     disable: true,
   },
+  editor: lexicalEditor(),
   db: postgresAdapter({
     pool: {
       connectionString:
