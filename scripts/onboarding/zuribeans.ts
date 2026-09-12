@@ -144,7 +144,7 @@ async function findOneByField(
     // System context — no tenant filter needed for lookup during seed.
     overrideAccess: true,
   })
-  return (result.docs[0] as Record<string, unknown> | undefined) ?? null
+  return (result.docs[0] as unknown as Record<string, unknown> | undefined) ?? null
 }
 
 /**
