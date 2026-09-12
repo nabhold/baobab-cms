@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   buildSsoSubject,
   extractHumanClaims,
+  generateUnusablePassword,
   isOidcConfigured,
   signTransaction,
   verifyTransaction,
@@ -116,5 +117,17 @@ describe('extractHumanClaims', () => {
       emailVerified: false,
       actorType: undefined,
     });
+  });
+});
+
+describe('generateUnusablePassword', () => {
+  it('produces a long, high-entropy value satisfying Payload\'s password validator', () => {
+    const password = generateUnusablePassword();
+    expect(typeof password).toBe('string');
+    expect(password.length).toBeGreaterThan(32);
+  });
+
+  it('never produces the same value twice', () => {
+    expect(generateUnusablePassword()).not.toBe(generateUnusablePassword());
   });
 });

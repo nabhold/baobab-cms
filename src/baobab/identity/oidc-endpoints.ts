@@ -6,6 +6,7 @@ import { getOidcConfig } from './oidc-client.js';
 import {
   buildSsoSubject,
   extractHumanClaims,
+  generateUnusablePassword,
   getOidcEnv,
   isOidcConfigured,
   signTransaction,
@@ -143,7 +144,13 @@ export const oidcEndpoints: Endpoint[] = [
       const ssoSubject = buildSsoSubject(issuer, subject);
       const payload = req.payload;
 
-      let user: Record<string, unknown> & { id: string | number };
+      // Payload's generated `User` type has no index signature, so casting
+      // it directly to `Record<string, unknown>` is rejected by strict mode
+      // as an insufficient overlap -- go through `unknown` first, same as
+      // the pattern already established elsewhere in this repo
+      // (scripts/onboarding/zuribeans.ts).
+      type MinimalUser = Record<string, unknown> & { id: string | number };
+      let user: MinimalUser;
       const bySubject = await payload.find({
         collection: 'users',
         where: { ssoSubject: { equals: ssoSubject } },
@@ -153,7 +160,7 @@ export const oidcEndpoints: Endpoint[] = [
       });
 
       if (bySubject.docs.length > 0) {
-        user = bySubject.docs[0] as typeof user;
+        user = bySubject.docs[0] as unknown as MinimalUser;
       } else if (email && emailVerified) {
         const byEmail = await payload.find({
           collection: 'users',
@@ -163,7 +170,7 @@ export const oidcEndpoints: Endpoint[] = [
           req,
         });
         if (byEmail.docs.length > 0) {
-          const existing = byEmail.docs[0] as typeof user & { ssoSubject?: string | null };
+          const existing = byEmail.docs[0] as unknown as MinimalUser & { ssoSubject?: string | null };
           if (existing.ssoSubject && existing.ssoSubject !== ssoSubject) {
             // Two different OIDC subjects resolving to the same local
             // email is an anomaly, not a routine re-link -- fail safe
@@ -181,7 +188,7 @@ export const oidcEndpoints: Endpoint[] = [
             data: { ssoSubject },
             overrideAccess: true,
             req,
-          })) as typeof user;
+          })) as unknown as MinimalUser;
         } else {
           // No existing account at all: provision one with zero
           // privileges (no editorialRoles/capabilities/platformAdministrator)
@@ -192,10 +199,15 @@ export const oidcEndpoints: Endpoint[] = [
           // afterwards.
           user = (await payload.create({
             collection: 'users',
-            data: { email, ssoSubject, serviceIdentity: false },
+            // password: local auth stays enabled for every account, and
+            // Payload requires a password on every create against an
+            // auth-enabled collection -- this one is generated, never
+            // disclosed, and never intended to authenticate anyone; this
+            // account's only entry point is SSO.
+            data: { email, ssoSubject, serviceIdentity: false, password: generateUnusablePassword() },
             overrideAccess: true,
             req,
-          })) as typeof user;
+          })) as unknown as MinimalUser;
         }
       } else {
         // No existing ssoSubject match, and no verified email to safely

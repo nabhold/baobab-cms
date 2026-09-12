@@ -1,4 +1,4 @@
-import { createHmac, timingSafeEqual } from 'node:crypto';
+import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 
 /**
  * Gate IAM-5 phase 2b (ADR-0009 §9, `baobab-iam`'s `baobab-cms-admin` client).
@@ -108,6 +108,22 @@ export function verifyTransaction(
   if (Date.now() - transaction.issuedAt > maxAgeSeconds * 1000) return null;
 
   return transaction;
+}
+
+/**
+ * `Users`' local email/password authentication stays enabled for every
+ * account, including SSO-provisioned ones (Payload validates a `password`
+ * is present on every `create` against an auth-enabled collection --
+ * `payload.create()` on `users` with no password field throws a
+ * `ValidationError`, not a silent skip). A brand-new SSO login therefore
+ * needs *some* password to satisfy that, but it must never be one anyone
+ * can log in with locally -- this account's only intended entry point is
+ * SSO. Generates a value nobody is ever told and nothing ever compares
+ * against; it exists purely to satisfy Payload's own required-field
+ * validation on creation.
+ */
+export function generateUnusablePassword(): string {
+  return randomBytes(48).toString('base64url');
 }
 
 /**

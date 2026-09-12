@@ -56,14 +56,14 @@ against — an operator can navigate to the URL directly today); a
 front-channel/back-channel logout integration with Keycloak (a local
 Payload logout does not currently also end the Keycloak session).
 
-**Before deploying this change:** `Users.ssoSubject` is a new column with
-no committed migration — this environment has no live Postgres to run
-`npm run db:generate` against and verify the result, so one wasn't
-fabricated by hand. Run `npm run db:generate` against a real database
-before deploying; it should add a `sso_subject varchar` column and a
-`users_sso_subject_idx` unique btree index, matching the existing
-`canonical_actor_id`/`users_canonical_actor_id_idx` pair in
-`migrations/20260905_121418_initial_schema.ts`.
+`Users.ssoSubject`'s migration (`migrations/20260912_172242.ts`) was generated
+and applied against a real local Postgres instance, not hand-written — it adds
+a `sso_subject varchar` column and a `users_sso_subject_idx` unique btree
+index, matching the existing `canonical_actor_id`/`users_canonical_actor_id_idx`
+pair. The provisioning path itself (create/find/update by `ssoSubject`,
+including the unique-index rejection of a duplicate subject) was also
+exercised end to end against that same database via the Local API, not just
+type-checked.
 
 ## Roles vs. capabilities vs. platform administration
 
