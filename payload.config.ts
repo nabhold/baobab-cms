@@ -18,6 +18,7 @@ import Outbox from './src/collections/Outbox.js';
 import AuditLog from './src/collections/AuditLog.js';
 import MappingProjections from './src/collections/MappingProjections.js';
 import { healthEndpoints } from './src/baobab/observability/endpoints.js';
+import { oidcEndpoints } from './src/baobab/identity/oidc-endpoints.js';
 
 const filename = fileURLToPath(import.meta.url);
 const dirname = path.dirname(filename);
@@ -65,7 +66,11 @@ export default buildConfig({
     AuditLog,
     MappingProjections,
   ],
-  endpoints: healthEndpoints,
+  // OIDC endpoints are always registered; they 404 at runtime when
+  // BAOBAB_IAM_OIDC_ISSUER is unset (src/baobab/identity/sso.ts's
+  // isOidcConfigured()) rather than being conditionally added here, so the
+  // config's shape doesn't change based on environment.
+  endpoints: [...healthEndpoints, ...oidcEndpoints],
   plugins: [
     s3Storage({
       collections: { media: true },
