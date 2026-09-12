@@ -9,16 +9,61 @@ resolution and §9 for authorization.
 `canonicalActorId` (server-assigned, immutable) is what canonical events
 and cross-engine references use — never the Payload `id` (ADR-0017 §5-6).
 
-There is no enterprise identity provider integrated in this environment
-(none exists in this organisation yet), so Payload local auth
-(email/password, plus `useAPIKey: true` for service identities) remains
-the actual authentication mechanism — this is the documented exceptional
-path ADR-0017 §8 anticipates, not the intended long-term production
-model. Wiring SSO/OIDC is a Payload `auth.strategies` addition once a
-provider exists; it does not require changing `src/baobab/context` or
-`src/baobab/authorization`, since both already consume `req.user` through
-the `ContextActor` structural interface rather than Payload's concrete
-auth implementation.
+Workforce SSO against `baobab-iam`'s Keycloak realm (`baobab-cms-admin`
+client) is now wired — Gate IAM-5 phase 2b, ADR-0009 §9. It is entirely
+optional and off by default: leaving `BAOBAB_IAM_OIDC_ISSUER` unset (see
+`.env.example`) makes `/api/oidc/login` and `/api/oidc/callback` both
+404, and Payload local auth (email/password, plus `useAPIKey: true` for
+service identities) keeps working exactly as before — this remains a
+supported path, not merely a fallback, since not every environment runs
+`baobab-iam`.
+
+Payload ships no official or community OIDC plugin (checked directly
+against the npm registry — nothing matching `payload`+`oidc`/`sso`/
+`keycloak` exists), so this is a small amount of purpose-built code
+(`src/baobab/identity/sso.ts`, `oidc-client.ts`, `oidc-endpoints.ts`)
+built directly on `openid-client` (the same underlying library
+`baobab-trade`'s own OIDC wiring uses) rather than a Payload
+`auth.strategies` implementation: the OIDC exchange only ever runs once,
+at login, to identify who the human is and mint a normal Payload session
+(`addSessionToUser`/`getFieldsToSign`/`jwtSign`/`generatePayloadCookie`
+— the exact same primitives Payload's own local-auth login handler
+uses); every subsequent request is authenticated by Payload's existing,
+already-audited JWT strategy, unmodified. This is also why wiring SSO
+never required changing `src/baobab/context` or
+`src/baobab/authorization` — both already consume `req.user` through the
+`ContextActor` structural interface rather than Payload's concrete auth
+implementation, and an SSO-provisioned user is a completely ordinary
+`users` document from their point of view.
+
+Identity matching uses `Users.ssoSubject` (`"{issuer}#{sub}"`), never
+email alone — the same `issuer+subject` uniqueness rule ADR-0007
+requires elsewhere on this platform, and the rule Gate IAM-10 found
+iDempiere's own OIDC plugin deviating from. Email-based account linking
+only happens when Keycloak's `email_verified` claim is `true`; a
+brand-new SSO login with no matching `ssoSubject` and no verified email
+is rejected outright rather than guessed at. A freshly auto-provisioned
+account is intentionally created with zero `editorialRoles`/
+`capabilities`/`platformAdministrator` — mirroring Gate IAM-5 phase 1's
+"no privileged JIT provisioning" rule on the IAM side (ADR-0009 §13,
+§87-88) with the same rule enforced here; an existing platform
+administrator must grant privileges explicitly afterward.
+
+**Deliberately not built in this phase:** a login-page UI link to
+`/api/oidc/login` (Payload's `admin.components.beforeLogin` needs an
+import-map rebuild this environment has no live instance to verify
+against — an operator can navigate to the URL directly today); a
+front-channel/back-channel logout integration with Keycloak (a local
+Payload logout does not currently also end the Keycloak session).
+
+**Before deploying this change:** `Users.ssoSubject` is a new column with
+no committed migration — this environment has no live Postgres to run
+`npm run db:generate` against and verify the result, so one wasn't
+fabricated by hand. Run `npm run db:generate` against a real database
+before deploying; it should add a `sso_subject varchar` column and a
+`users_sso_subject_idx` unique btree index, matching the existing
+`canonical_actor_id`/`users_canonical_actor_id_idx` pair in
+`migrations/20260905_121418_initial_schema.ts`.
 
 ## Roles vs. capabilities vs. platform administration
 

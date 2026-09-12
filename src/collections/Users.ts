@@ -85,6 +85,18 @@ const Users: CollectionConfig = {
       admin: { description: 'Content-Engine editorial roles (ADR-0017 §17-23). Not platform administration.' },
     },
     {
+      name: 'ssoSubject',
+      type: 'text',
+      unique: true,
+      index: true,
+      admin: {
+        readOnly: true,
+        description:
+          'Workforce SSO identity, "{issuer}#{subject}" (Gate IAM-5 phase 2b, ADR-0009 §9). Set only by the OIDC callback; never client-settable.',
+      },
+      access: { update: () => false },
+    },
+    {
       name: 'capabilities',
       type: 'text',
       hasMany: true,
